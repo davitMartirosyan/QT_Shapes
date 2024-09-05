@@ -1,0 +1,28 @@
+# Qt build files
+*.pro.user
+*.pro.user.*
+*.qmake.stash
+*.qmake.cache
+
+# Qt Creator files
+*.creator
+*.creator.user
+*.creator.user.*
+*.creator.shared.*
+
+# Build folders
+build-*/
+
+# Other build files
+*.o
+*.a
+*.so
+*.dll
+*.dylib
+*.exe
+*.obj
+*.moc
+
+# Other ignored files
+.DS_Store
+

@@ -8,11 +8,11 @@ Parser::Parser(QString const &cmdline)
 
 Parser::Parser( void )
 {
+    isNameExpression = false;
     cCount = 0;
     eCount = 0;
     fmap[Parser::COMMAND] = &Parser::commandSyntax;
     fmap[Parser::EXPANSION] = &Parser::expansionSyntax;
-    fmap[Parser::SHAPE_NAME] = &Parser::expansionSyntax;
     fmap[Parser::EXPANSION_FIELD] = &Parser::fieldSyntax;
 }
 
@@ -32,32 +32,25 @@ void Parser::setCommand(QString const &cmd)
     }
 }
 
-void Parser::resetCommandCount( void )
+void Parser::reset( void )
 {
     this->cCount = 0;
-}
-
-void Parser::resetCommandName( void )
-{
-    this->commandName.clear();
-}
-void Parser::resetShapeName( void )
-{
-    this->shapeName.clear();
+    this->eCount = 0;
+    this->shape.clear();
+    this->command.clear();
+    this->name.clear();
+    lst.clear();
 }
 
 bool Parser::parser(QString const &cmd)
 {
     setCommand(cmd);
-    resetCommandCount();
-    resetCommandName();
-    resetShapeName();
-
-    auto cleaning = [&]() {lst.clear(); return (false);};
-    if (
-            !lexicalAnalysis(this->cmd) || !syntaxAnalysis() /*|| !semanticAnalysis() || eCount != 1 || cCount != 1*/)
-            return cleaning();
-
+    reset();
+    if (!lexicalAnalysis(this->cmd) || !syntaxAnalysis() || !semanticAnalysis() || eCount != 1 || cCount != 1)
+        return (false);
+    if (!insertShapeData())
+        return (false);
+    std::cout << shapeData.coord[0].first <<  " : " << shapeData.coord[0].second << std::endl;
     return (true);
 }
 
@@ -103,7 +96,7 @@ bool Parser::lexicalAnalysis(std::string const &cmd)
         }
         i++;
     }
-    // printList();
+    printList();
     return (true);
 }
 
@@ -125,6 +118,8 @@ bool Parser::syntaxAnalysis( void )
         Parser::tok type;
         std::string lexeme;
         std::tie(type, lexeme) = lex;
+        if (type == EXPANSION && lexeme == "name")
+            isNameExpression = true;
         if (!(this->*fmap[type])(type, lexeme))
             return (false);
     }
@@ -165,11 +160,10 @@ bool Parser::semanticAnalysis( void )
             switch (cLex)
             {
                 case Parser::COMMAND :
-                    if (nLex != Parser::EXPANSION && nLex != Parser::SHAPE_NAME)
+                    if (nLex != Parser::EXPANSION)
                         return (false);
                     break;
                 case Parser::EXPANSION :
-                case Parser::SHAPE_NAME :
                     if (nLex != Parser::EXPANSION_FIELD)
                         return (false);
                     break;
@@ -180,6 +174,7 @@ bool Parser::semanticAnalysis( void )
             }
         }
     }
+
     return (true);
 }
 
@@ -270,16 +265,15 @@ std::string Parser::trim(const std::string &s)
     return (ltrim(rtrim(s)));
 }
 
-
 bool Parser::commandSyntax(Parser::tok type, std::string lexeme)
 {
     (void)type;
     size_t f;
-    cCount++;
     if ((f = lexeme.find('_')) != std::string::npos)
     {
-        commandName = lexeme.substr(0, f);
-        shapeName = lexeme.substr(f+1);
+        cCount++;
+        command = lexeme.substr(0, f);
+        shape = lexeme.substr(f+1);
         return (true);
     }
     return (false);
@@ -318,6 +312,26 @@ bool Parser::expansionSyntax(Parser::tok type, std::string lexeme)
 bool Parser::fieldSyntax(Parser::tok type, std::string lexeme)
 {
     (void)type, (void)lexeme;
+    std::string validChars;
+    size_t f;
+    if (isNameExpression)
+    {
+        //name expansion
+        validChars = "abcdefghijklmnopqrstuvwxyz0123456789";
+        isNameExpression = false;
+        if ((f = lexeme.find_first_not_of(validChars)) != std::string::npos)
+            return (false);
+        name = lexeme;
+    }
+    else
+    {
+        //coordinates expression
+        validChars = "-+0123456789., ";
+        if ((f = lexeme.find_first_not_of(validChars)) != std::string::npos)
+            return (false);
+        if (!isValidCoordinate(lexeme))
+            return (false);
+    }
     return (true);
 }
 
@@ -338,13 +352,12 @@ bool Parser::isValidCoordinate(std::string const &coord)
               return false;
           }
       }
-
-      std::cout << "coordinates: " << std::endl;
-      for(auto &coord : tokens)
-      {
-          std::cout << coord << " : ";
-      }
-      std::cout << std::endl;
+      // std::cout << "coordinates: " << std::endl;
+      // for(auto &coord : tokens)
+      // {
+      //     std::cout << coord << " : ";
+      // }
+      // std::cout << std::endl;
       return true;
 }
 
@@ -359,4 +372,47 @@ bool Parser::isInteger(std::string const &coord)
      return iss.eof() && !iss.fail();
 }
 
+bool Parser::insertShapeData( void )
+{
+    shapeData.shape = this->shape;
+    shapeData.command = this->command;
+    shapeData.name = this->name;
+    std::string coordName;
+    for(int i = 0; i < lst.size(); i++)
+    {
+        std::string lexeme;
+        Parser::tok type;
+        std::tie(type, lexeme) = lst[i];
+        if (type == Parser::EXPANSION && lexeme != "name")
+        {
+            std::string coordinates = std::get<1>(lst[i+1]);
+            if (!insertCoordinates(lexeme, coordinates))
+                return (false);
+        }
+    }
+    return (true);
+}
 
+bool Parser::insertCoordinates(std::string const &lexeme, std::string const &coordinates)
+{
+    size_t comma = coordinates.find(',');
+    if (comma == std::string::npos)
+        return (false);
+    std::string xCoord = coordinates.substr(0, comma);
+    std::string yCoord = coordinates.substr(comma + 1);
+    try
+    {
+        double x = std::stod(xCoord);
+        double y = std::stod(yCoord);
+        shapeData.coord[lexeme] = {x, y};
+    } catch (const std::invalid_argument& e) {
+        std::cerr << "Error: Could not parse coordinates (" << xCoord << ", " << yCoord << ")" << std::endl;
+        return (false);
+    }
+    return (true);
+}
+
+// ShapeData   const &Parser::getShapeData( void ) const
+// {
+
+// }

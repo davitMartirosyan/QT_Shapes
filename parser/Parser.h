@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <unordered_map>
 #include <QVector>
 #include <QList>
 #include <QMap>
@@ -13,7 +14,9 @@
 struct ShapeData
 {
     std::string shape;
-    QMap<std::string, std::pair<int, int>> coord;
+    std::string name;
+    std::string command;
+    std::unordered_map<std::string, std::pair<double, double>> coord;
 };
 
 class Parser
@@ -23,7 +26,6 @@ private:
     {
         COMMAND,            // create_rectangle
         EXPANSION,          // coord_1
-        SHAPE_NAME,         // name
         EXPANSION_FIELD,    // {34,45}
     };
 
@@ -31,9 +33,7 @@ public:
     Parser(QString const &cmdline);
     Parser( void );
     void setCommand(QString const &cmd);
-    void resetCommandCount( void );
-    void resetCommandName( void );
-    void resetShapeName( void );
+    void reset( void );
     void printList( void );
     ~Parser();
 
@@ -44,10 +44,12 @@ private:
 private:
     ShapeData   shapeData;
     std::string cmd;
-    std::string commandName;
-    std::string shapeName;
+    std::string command;
+    std::string shape;
+    std::string name;
     short       cCount;
     short       eCount;
+    bool        isNameExpression;
 
 private:
     bool commandSyntax(Parser::tok, std::string);
@@ -67,6 +69,8 @@ private: //helpers
     bool        isValidExpression(char c);
     bool        isInteger(std::string const &coord);
     bool        isValidCoordinate(std::string const &coord);
+    bool        insertCoordinates(std::string const &lexeme, std::string const &coord);
+    bool        insertShapeData( void );
 
 public:
     int         insert(std::string &query, int *i);

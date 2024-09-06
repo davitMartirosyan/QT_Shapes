@@ -53,7 +53,7 @@ cd QT_Shapes
 ```
 ### Build
 ```bash
-mkdir Build
+mkdir build
 cd build
 qmake ../Shapes.pro
 ```

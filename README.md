@@ -20,11 +20,11 @@ create_line -name {line_name} -coord_1 {x1, y1} -coord_2 {x2, y2}
 ```
 
 ```bash
-create_rectangle -name {line_name} -coord_1 {x1, y1} -coord_2 {x2, y2}
+create_rectangle -name {rectangle_name} -coord_1 {x1, y1} -coord_2 {x2, y2}
 ```
 
 ```bash
-create_triangle -name {line_name} -coord_1 {x1, y1} -coord_2 {x2, y2} -coord_3 {x3, y3}
+create_triangle -name {triangle_name} -coord_1 {x1, y1} -coord_2 {x2, y2} -coord_3 {x3, y3}
 ```
 
 ### 3. Saving Logs

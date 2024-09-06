@@ -1,16 +1,6 @@
 #include "Shape.h"
 
-Shape::~Shape()
+Shape::Shape(const QPen &pen, const QBrush &brush) : pen(pen), brush(brush)
 {
 
-}
-
-void Shape::setName(std::string const &name)
-{
-    shapeName = QString::fromStdString(name);
-}
-
-QString const &Shape::getName( void ) const
-{
-    return (shapeName);
 }

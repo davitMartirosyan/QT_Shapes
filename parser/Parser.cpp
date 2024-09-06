@@ -9,6 +9,7 @@ Parser::Parser(QString const &cmdline)
 Parser::Parser( void )
 {
     isNameExpression = false;
+    coordCount = 0;
     cCount = 0;
     eCount = 0;
     fmap[Parser::COMMAND] = &Parser::commandSyntax;
@@ -18,7 +19,7 @@ Parser::Parser( void )
 
 Parser::~Parser()
 {
-    std::cout << "mta destructor" << std::endl;
+
 }
 
 void Parser::setCommand(QString const &cmd)
@@ -34,6 +35,7 @@ void Parser::setCommand(QString const &cmd)
 
 void Parser::reset( void )
 {
+    this->coordCount = 0;
     this->cCount = 0;
     this->eCount = 0;
     this->shape.clear();
@@ -46,11 +48,10 @@ bool Parser::parser(QString const &cmd)
 {
     setCommand(cmd);
     reset();
-    if (!lexicalAnalysis(this->cmd) || !syntaxAnalysis() || !semanticAnalysis() || eCount != 1 || cCount != 1)
+    if (!lexicalAnalysis(this->cmd) || !syntaxAnalysis() || !semanticAnalysis() || eCount != 1 || cCount != 1 || coordCount < 2)
         return (false);
     if (!insertShapeData())
         return (false);
-    std::cout << shapeData.coord[0].first <<  " : " << shapeData.coord[0].second << std::endl;
     return (true);
 }
 
@@ -96,7 +97,6 @@ bool Parser::lexicalAnalysis(std::string const &cmd)
         }
         i++;
     }
-    printList();
     return (true);
 }
 
@@ -125,29 +125,6 @@ bool Parser::syntaxAnalysis( void )
     }
     return (true);
 }
-
-// bool Parser::syntaxAnalysis( void )
-// {
-//     Parser::tok prevType;
-//     bool first = true;
-
-//     for(auto &lex : lst)
-//     {
-//         Parser::tok currType;
-//         std::string lexeme;
-//         std::tie(currType, lexeme) = lex;
-
-//         if (!first) {
-//             if (!(this->*fmap[currType])(prevType, lexeme))
-//                 return false;
-//         } else {
-//             first = false;
-//         }
-
-//         prevType = currType;
-//     }
-//     return true;
-// }
 
 bool Parser::semanticAnalysis( void )
 {
@@ -289,25 +266,12 @@ bool Parser::expansionSyntax(Parser::tok type, std::string lexeme)
         return (true);
     }
     if (lexeme.compare(0, std::strlen(prefix), prefix) == 0)
+    {
+        coordCount++;
         return (true);
+    }
     return (false);
 }
-
-// bool Parser::fieldSyntax(Parser::tok type, std::string lexeme)
-// {
-//     std::string validChars;
-//     size_t f;
-//     if (type == Parser::SHAPE_NAME)
-//         validChars = "-+0123456789. abcdefghijklmnopqrstuvwxyz";
-//     else if(type == Parser::EXPANSION)
-//         validChars = "-+0123456789,. ";
-//     f = lexeme.find_first_not_of(validChars);
-//     if (f != std::string::npos)
-//         return (false);
-//     if (type == Parser::EXPANSION && !isValidCoordinate(lexeme))
-//             return (false);
-//     return (true);
-// }
 
 bool Parser::fieldSyntax(Parser::tok type, std::string lexeme)
 {
@@ -319,15 +283,17 @@ bool Parser::fieldSyntax(Parser::tok type, std::string lexeme)
         //name expansion
         validChars = "abcdefghijklmnopqrstuvwxyz0123456789";
         isNameExpression = false;
-        if ((f = lexeme.find_first_not_of(validChars)) != std::string::npos)
+        f = lexeme.find_first_not_of(validChars);
+        if (f != std::string::npos)
             return (false);
         name = lexeme;
     }
     else
     {
-        //coordinates expression
+        //coordinates expansion
         validChars = "-+0123456789., ";
-        if ((f = lexeme.find_first_not_of(validChars)) != std::string::npos)
+        f = lexeme.find_first_not_of(validChars);
+        if (f != std::string::npos)
             return (false);
         if (!isValidCoordinate(lexeme))
             return (false);
@@ -352,12 +318,6 @@ bool Parser::isValidCoordinate(std::string const &coord)
               return false;
           }
       }
-      // std::cout << "coordinates: " << std::endl;
-      // for(auto &coord : tokens)
-      // {
-      //     std::cout << coord << " : ";
-      // }
-      // std::cout << std::endl;
       return true;
 }
 
@@ -406,13 +366,13 @@ bool Parser::insertCoordinates(std::string const &lexeme, std::string const &coo
         double y = std::stod(yCoord);
         shapeData.coord[lexeme] = {x, y};
     } catch (const std::invalid_argument& e) {
-        std::cerr << "Error: Could not parse coordinates (" << xCoord << ", " << yCoord << ")" << std::endl;
+        std::cerr << "Incorrect Symbols (" << xCoord << ", " << yCoord << ")" << std::endl;
         return (false);
     }
     return (true);
 }
 
-// ShapeData   const &Parser::getShapeData( void ) const
-// {
-
-// }
+ShapeData   const &Parser::getShapeData( void ) const
+{
+    return (this->shapeData);
+}

@@ -14,9 +14,16 @@
 #include <QVector>
 #include <QDebug>
 #include <QTextEdit>
+#include <QPushButton>
+#include <QFileDialog>
+#include <QMessageBox>
 
 #include "shape/Shape.h"
 #include "parser/Parser.h"
+#include "factory/Factory.h"
+#include "factory/FactoryLine.h"
+#include "factory/FactoryRect.h"
+#include "factory/FactoryTriangle.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -32,6 +39,7 @@ public:
 
 private:
     MainWindow(QWidget *parent = nullptr);
+    Factory *getFactory(const std::string shapeType);
 
 private:
     Ui::MainWindow  *ui;
@@ -44,6 +52,7 @@ private:
 
 private:
     QPushButton     *btn;
+    QPushButton     *saveBtn;
     QLineEdit       *cli;
     QGraphicsView   *view;
     QGraphicsScene  *scene;

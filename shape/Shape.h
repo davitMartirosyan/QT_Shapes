@@ -8,25 +8,15 @@
 #include <QGraphicsScene>
 #include <QGraphicsView>
 
-
 class Shape
 {
+protected:
+    QPen pen;
+    QBrush brush;
 public:
-    ~Shape();
-
-private:
-    QString shapeName;
-    QVector<int> coord;
-private:
-    int coordCount;
-public:
-    QString const &getName( void ) const;
-
-public:
-    void setName(std::string const &name);
-
-public:
-    virtual void draw() const = 0;
+    Shape(const QPen &pen, const QBrush &brush);
+    virtual void draw(QGraphicsScene *scene) = 0;
+    virtual ~Shape() = default;
 };
 
 #endif // SHAPE_H

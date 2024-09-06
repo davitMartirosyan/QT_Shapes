@@ -10,14 +10,8 @@
 #include <QMap>
 #include <QPair>
 #include <tuple>
+#include "shape/ShapeData.h"
 
-struct ShapeData
-{
-    std::string shape;
-    std::string name;
-    std::string command;
-    std::unordered_map<std::string, std::pair<double, double>> coord;
-};
 
 class Parser
 {
@@ -47,6 +41,7 @@ private:
     std::string command;
     std::string shape;
     std::string name;
+    short       coordCount;
     short       cCount;
     short       eCount;
     bool        isNameExpression;

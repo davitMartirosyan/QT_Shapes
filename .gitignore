@@ -12,7 +12,7 @@
 
 # Build folders
 build-*/
-
+/build/
 # Other build files
 *.o
 *.a
